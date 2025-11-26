@@ -171,7 +171,7 @@ jobs:
 
   finish_exercise:
     name: Finish Exercise
-    needs: [find_exercise, post_review_content]
+    needs: [find_exercise, post_next_step_content]
     uses: skills/exercise-toolkit/.github/workflows/finish-exercise.yml@v0.7.1
     with:
       issue-url: ${{ needs.find_exercise.outputs.issue-url }}
