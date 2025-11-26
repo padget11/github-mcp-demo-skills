@@ -1,1 +1,18 @@
 name: Step 3
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+jobs:
+  placeholder:
+    name: Placeholder Job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Placeholder step
+        run: echo "This is a placeholder workflow for Step 3"
+
