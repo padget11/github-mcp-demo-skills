@@ -6,8 +6,6 @@ on:
     workflows: ["Step 3"]
     types:
       - completed
-    branches:
-      - main
 
 permissions:
   contents: write
