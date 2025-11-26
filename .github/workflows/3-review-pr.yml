@@ -1,18 +1,178 @@
 name: Step 3
 
 on:
-  workflow_dispatch:
+  pull_request:
+    types: [closed]
+  push:
+    branches:
+      - demo
 
 permissions:
   contents: read
   actions: write
   issues: write
 
-jobs:
-  placeholder:
-    name: Placeholder Job
-    runs-on: ubuntu-latest
-    steps:
-      - name: Placeholder step
-        run: echo "This is a placeholder workflow for Step 3"
+env:
+  STEP_4_FILE: ".github/steps/4-cleanup.md"
 
+jobs:
+  find_exercise:
+    name: Find Exercise Issue
+    uses: skills/exercise-toolkit/.github/workflows/find-exercise-issue.yml@v0.7.0
+
+  check_step_work:
+    name: Check step work
+    runs-on: ubuntu-latest
+    needs: [find_exercise]
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    env:
+      ISSUE_REPOSITORY: ${{ github.repository }}
+      ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Get response templates
+        uses: actions/checkout@v5
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.7.0
+
+      - name: Find last comment
+        id: find-last-comment
+        uses: peter-evans/find-comment@v3
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          direction: last
+
+      - name: Update comment - checking work
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-id: ${{ steps.find-last-comment.outputs.comment-id }}
+          file: exercise-toolkit/markdown-templates/step-feedback/checking-work.md
+          edit-mode: replace
+
+      # START: Check practical exercise
+
+      - name: Check if PR was merged
+        id: check-pr-merged
+        continue-on-error: true
+        run: |
+          if [ "${{ github.event.pull_request.merged }}" == "true" ] || [ "${{ github.event_name }}" == "push" ]; then
+            echo "merged=true" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo "merged=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Check if hotfix branch was deleted remotely
+        id: check-branch-deleted
+        continue-on-error: true
+        run: |
+          # Check if hotfix branch exists remotely
+          if git ls-remote --heads origin hotfix/css-stylesheet-typo | grep -q hotfix; then
+            echo "deleted=false" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "deleted=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+      - name: Check if on demo branch
+        id: check-demo-branch
+        continue-on-error: true
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/demo" ]; then
+            echo "on_demo=true" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo "on_demo=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Update comment - step results
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          comment-id: ${{ steps.find-last-comment.outputs.comment-id }}
+          edit-mode: replace
+          file: exercise-toolkit/markdown-templates/step-feedback/step-results-table.md
+          vars: |
+            step_number: 3
+            results_table:
+              - description: "Pull request was successfully merged into demo branch"
+                passed: ${{ steps.check-pr-merged.outcome == 'success' }}
+              - description: "Hotfix branch was deleted remotely"
+                passed: ${{ steps.check-branch-deleted.outcome == 'success' }}
+              - description: "Code is now on demo branch"
+                passed: ${{ steps.check-demo-branch.outcome == 'success' }}
+
+      # END: Check practical exercise
+
+      - name: Fail job if not all checks passed
+        if: contains(steps.*.outcome, 'failure')
+        run: exit 1
+
+  post_next_step_content:
+    name: Post next step content
+    needs: [find_exercise, check_step_work]
+    runs-on: ubuntu-latest
+    env:
+      ISSUE_REPOSITORY: ${{ github.repository }}
+      ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Get response templates
+        uses: actions/checkout@v5
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.7.0
+
+      - name: Create comment - step finished
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: exercise-toolkit/markdown-templates/step-feedback/step-finished-prepare-next-step.md
+          vars: |
+            next_step_number: 4
+
+      - name: Create comment - add step content
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: ${{ env.STEP_4_FILE }}
+
+      - name: Create comment - watching for progress
+        uses: GrantBirki/comment@v2.1.1
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
+
+      - name: Disable current workflow
+        run: gh workflow disable "${{github.workflow}}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  finish_exercise:
+    name: Finish Exercise
+    needs: [find_exercise, post_review_content]
+    uses: skills/exercise-toolkit/.github/workflows/finish-exercise.yml@v0.7.1
+    with:
+      issue-url: ${{ needs.find_exercise.outputs.issue-url }}
+      exercise-title: "Getting Started with GitHub Copilot" # TODO change to mcp
