@@ -1,8 +1,8 @@
 name: Step 4
 
 on:
+  workflow_dispatch:
   workflow_run:
-    workflow_dispatch:
     workflows: ["Step 3"]
     types:
       - completed
@@ -20,7 +20,7 @@ env:
 jobs:
   find_exercise:
     name: Find Exercise Issue
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     uses: skills/exercise-toolkit/.github/workflows/find-exercise-issue.yml@v0.7.0
 
   post_review_content:
