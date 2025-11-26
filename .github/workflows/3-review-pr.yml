@@ -132,7 +132,7 @@ jobs:
   
   post_review_content:
     name: Post review content
-    needs: [check_step_work]
+    needs: [find_exercise, check_step_work]
     runs-on: ubuntu-latest
     env:
       ISSUE_REPOSITORY: ${{ github.repository }}
