@@ -16,27 +16,7 @@ Copilot, I just opened my World Clock website and it looks completely broken - a
 - Identify the typo in `href="styls.css"`
 - Explain the root cause and impact
 
-### **Phase 2: Issue Management via GitHub MCP** 📝
-
-**📝 Collaborative Bug Tracking: Using MCP Tools for Issue Management**
-
-Demonstrate how to use GitHub MCP tools for creating and managing issues directly from VS Code. This shows the power of integrated workflows.
-
-**What this phase achieves**: Creates a GitHub issue using MCP tools, demonstrating seamless integration between development environment and project management.
-
-**User Prompt:**
-```
-Now that we've found the CSS link typo, can you create a GitHub issue to track this bug? Make it a critical priority since it breaks the entire user experience. Please create the issue against the current demo branch (not main).
-```
-
-**Expected AI Actions:**
-- Use `mcp_github_create_issue` to create bug report
-- Include detailed description of the CSS link typo
-- Set appropriate labels (bug, critical) and priority
-- Reference the specific file and line number
-- Link to demo branch context
-
-### **Phase 3: Create Hotfix Branch** 🌿
+### **Phase 2: Create Hotfix Branch** 🌿
 
 **🌱 Strategic Branching: Implementing Best Practices**
 
@@ -46,7 +26,7 @@ Guide AI through proper branching strategy for hotfixes. This demonstrates profe
 
 **User Prompt:**
 ```
-Perfect! Now let's create a hotfix branch to fix this CSS issue. Can you create a branch called 'hotfix/css-stylesheet-typo' and switch to it?
+Now let's create a hotfix branch to fix this CSS issue. Can you create a branch called 'hotfix/css-stylesheet-typo' and switch to it?
 ```
 
 **Expected AI Actions:**
@@ -54,7 +34,7 @@ Perfect! Now let's create a hotfix branch to fix this CSS issue. Can you create 
 - Switch to the new branch for development
 - Confirm branch creation and current working branch
 
-### **Phase 4: Local Development & Fix** 🛠️
+### **Phase 3: Local Development & Fix** 🛠️
 
 **🔧 Guided Code Repair: AI-Assisted Bug Resolution**
 
@@ -72,3 +52,22 @@ Now let's fix the actual bug. Can you correct the CSS link in index.html from 's
 - Make the correction: `href="styls.css"` → `href="styles.css"`
 - Show the diff/change being made
 - Verify the fix is applied correctly
+
+### **Phase 4: Push & Create PR** 📤
+
+**🚀 Collaborative Review: Preparing Changes for Integration**
+
+Guide AI through committing changes and creating a pull request for code review.
+
+**What this phase achieves**: Demonstrates proper commit practices and PR creation, setting up the review process.
+
+**User Prompt:**
+```
+Great! The fix looks good. Now let's commit this change and push it to create a PR. Use a descriptive commit message about fixing the CSS stylesheet typo.
+```
+
+**Expected AI Actions:**
+- Stage and commit changes with descriptive message
+- Push the hotfix branch to remote repository
+- Use `mcp_github_create_pull_request` to create PR
+- Set appropriate title and description for the PR
