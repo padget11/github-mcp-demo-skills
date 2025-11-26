@@ -1,6 +1,7 @@
 name: Step 1
 
 on:
+  workflow_dispatch:
   push:
     # Trigger on pushes to any branch except the protected `main` branch
     branches-ignore:
