@@ -21,7 +21,7 @@ jobs:
     name: Start Exercise
     uses: skills/exercise-toolkit/.github/workflows/start-exercise.yml@v0.7.3
     with:
-      exercise-title: "Getting Started with GitHub Copilot"
+      exercise-title: "Getting Started with MCP server"
       intro-message: "Welcome to the GitHub MCP Demo Skills exercise! 🚀 This demo showcases how GitHub Copilot integrates with Model Context Protocol (MCP) to provide enhanced AI-powered development experiences. Let's explore these powerful integrations together! 💻✨"
 
   post_next_step_content:

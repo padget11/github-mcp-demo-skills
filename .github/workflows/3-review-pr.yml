@@ -1,7 +1,6 @@
 name: Step 3
 
 on:
-  workflow_dispatch: # TPDO remove trigger
   pull_request:
     types: [closed]
   push:
@@ -9,12 +8,9 @@ on:
       - demo
 
 permissions:
-  contents: write
+  contents: read
   actions: write
   issues: write
-
-env:
-  STEP_4_FILE: ".github/steps/4-cleanup.md"
 
 jobs:
   find_exercise:
@@ -123,57 +119,11 @@ jobs:
         if: contains(steps.*.outcome, 'failure')
         run: exit 1
 
-  post_next_step_content:
-    name: Post next step content
-    needs: [find_exercise, check_step_work]
-    runs-on: ubuntu-latest
-    env:
-      ISSUE_REPOSITORY: ${{ github.repository }}
-      ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Get response templates
-        uses: actions/checkout@v5
-        with:
-          repository: skills/exercise-toolkit
-          path: exercise-toolkit
-          ref: v0.7.0
-
-      - name: Create comment - step finished
-        uses: GrantBirki/comment@v2.1.1
-        with:
-          repository: ${{ env.ISSUE_REPOSITORY }}
-          issue-number: ${{ env.ISSUE_NUMBER }}
-          file: exercise-toolkit/markdown-templates/step-feedback/step-finished-prepare-next-step.md
-          vars: |
-            next_step_number: 4
-
-      - name: Create comment - add step content
-        uses: GrantBirki/comment@v2.1.1
-        with:
-          repository: ${{ env.ISSUE_REPOSITORY }}
-          issue-number: ${{ env.ISSUE_NUMBER }}
-          file: ${{ env.STEP_4_FILE }}
-
-      - name: Create comment - watching for progress
-        uses: GrantBirki/comment@v2.1.1
-        with:
-          repository: ${{ env.ISSUE_REPOSITORY }}
-          issue-number: ${{ env.ISSUE_NUMBER }}
-          file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
-
-      - name: Disable current workflow
-        run: gh workflow disable "${{github.workflow}}"
+      - name: Disable current workflow and enable next one
+        run: |
+          gh workflow disable "${{github.workflow}}"
+          gh workflow enable "4-cleanup.yml"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  finish_exercise:
-    name: Finish Exercise
-    needs: [find_exercise, post_next_step_content]
-    uses: skills/exercise-toolkit/.github/workflows/finish-exercise.yml@v0.7.1
-    with:
-      issue-url: ${{ needs.find_exercise.outputs.issue-url }}
-      exercise-title: "Getting Started with GitHub Copilot" # TODO change to mcp
+
