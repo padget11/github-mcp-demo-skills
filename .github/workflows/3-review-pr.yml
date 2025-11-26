@@ -130,43 +130,43 @@ jobs:
         if: contains(steps.*.outcome, 'failure')
         run: exit 1
   
-post_review_content:
-    name: Post review content
-    needs: [check_step_work]
-    runs-on: ubuntu-latest
-    env:
-      ISSUE_REPOSITORY: ${{ github.repository }}
-      ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
+  post_review_content:
+      name: Post review content
+      needs: [check_step_work]
+      runs-on: ubuntu-latest
+      env:
+        ISSUE_REPOSITORY: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v5
 
-      - name: Get response templates
-        uses: actions/checkout@v5
-        with:
-          repository: skills/exercise-toolkit
-          path: exercise-toolkit
-          ref: v0.7.0
+        - name: Get response templates
+          uses: actions/checkout@v5
+          with:
+            repository: skills/exercise-toolkit
+            path: exercise-toolkit
+            ref: v0.7.0
 
-      - name: Create comment - step finished - final review next
-        uses: GrantBirki/comment@v2.1.1
-        with:
-          repository: ${{ env.ISSUE_REPOSITORY }}
-          issue-number: ${{ env.ISSUE_NUMBER }}
-          file: exercise-toolkit/markdown-templates/step-feedback/lesson-review.md
+        - name: Create comment - step finished - final review next
+          uses: GrantBirki/comment@v2.1.1
+          with:
+            repository: ${{ env.ISSUE_REPOSITORY }}
+            issue-number: ${{ env.ISSUE_NUMBER }}
+            file: exercise-toolkit/markdown-templates/step-feedback/lesson-review.md
 
-      - name: Create comment - add review content
-        uses: GrantBirki/comment@v2.1.1
-        with:
-          repository: ${{ env.ISSUE_REPOSITORY }}
-          issue-number: ${{ env.ISSUE_NUMBER }}
-          file: ${{ env.REVIEW_FILE }}
+        - name: Create comment - add review content
+          uses: GrantBirki/comment@v2.1.1
+          with:
+            repository: ${{ env.ISSUE_REPOSITORY }}
+            issue-number: ${{ env.ISSUE_NUMBER }}
+            file: ${{ env.REVIEW_FILE }}
 
-      - name: Disable current workflow
-        run: gh workflow disable "${{github.workflow}}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        - name: Disable current workflow
+          run: gh workflow disable "${{github.workflow}}"
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   finish_exercise:
     name: Finish Exercise
