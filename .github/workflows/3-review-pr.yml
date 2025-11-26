@@ -24,7 +24,6 @@ jobs:
     name: Check step work
     runs-on: ubuntu-latest
     needs: [find_exercise]
-    if: github.event.pull_request.merged == true || github.event_name == 'push'
     env:
       ISSUE_REPOSITORY: ${{ github.repository }}
       ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
@@ -65,13 +64,17 @@ jobs:
         id: check-pr-merged
         continue-on-error: true
         run: |
-          if [ "${{ github.event.pull_request.merged }}" == "true" ] || [ "${{ github.event_name }}" == "push" ]; then
+          # Check if any PR was merged into demo branch
+          merged_pr=$(gh pr list --state merged --base demo --json mergedAt --jq '.[0].mergedAt')
+          if [ -n "$merged_pr" ] && [ "$merged_pr" != "null" ]; then
             echo "merged=true" >> $GITHUB_OUTPUT
             exit 0
           else
             echo "merged=false" >> $GITHUB_OUTPUT
             exit 1
           fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if hotfix branch was deleted remotely
         id: check-branch-deleted
@@ -86,11 +89,12 @@ jobs:
             exit 0
           fi
 
-      - name: Check if on demo branch
+      - name: Check if code exists on demo branch
         id: check-demo-branch
         continue-on-error: true
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/demo" ]; then
+          # Check if demo branch exists and has commits
+          if git show-ref --verify --quiet refs/remotes/origin/demo; then
             echo "on_demo=true" >> $GITHUB_OUTPUT
             exit 0
           else
@@ -128,5 +132,3 @@ jobs:
           gh workflow enable "4-cleanup.yml"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
