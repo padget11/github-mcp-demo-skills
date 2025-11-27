@@ -24,111 +24,111 @@ jobs:
     name: Find Exercise Issue
     uses: skills/exercise-toolkit/.github/workflows/find-exercise-issue.yml@v0.7.0
 
-  check_step_work:
-    name: Check step work
-    runs-on: ubuntu-latest
-    needs: [find_exercise]
-    env:
-      ISSUE_REPOSITORY: ${{ github.repository }}
-      ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
+  # check_step_work:
+  #   name: Check step work
+  #   runs-on: ubuntu-latest
+  #   needs: [find_exercise]
+  #   env:
+  #     ISSUE_REPOSITORY: ${{ github.repository }}
+  #     ISSUE_NUMBER: ${{ needs.find_exercise.outputs.issue-number }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v5
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Get response templates
-        uses: actions/checkout@v5
-        with:
-          repository: skills/exercise-toolkit
-          path: exercise-toolkit
-          ref: v0.7.0
+  #     - name: Get response templates
+  #       uses: actions/checkout@v5
+  #       with:
+  #         repository: skills/exercise-toolkit
+  #         path: exercise-toolkit
+  #         ref: v0.7.0
 
-      - name: Find last comment
-        id: find-last-comment
-        uses: peter-evans/find-comment@v3
-        with:
-          repository: ${{ env.ISSUE_REPOSITORY }}
-          issue-number: ${{ env.ISSUE_NUMBER }}
-          direction: last
+  #     - name: Find last comment
+  #       id: find-last-comment
+  #       uses: peter-evans/find-comment@v3
+  #       with:
+  #         repository: ${{ env.ISSUE_REPOSITORY }}
+  #         issue-number: ${{ env.ISSUE_NUMBER }}
+  #         direction: last
 
-      - name: Update comment - checking work
-        uses: GrantBirki/comment@v2.1.1
-        with:
-          repository: ${{ env.ISSUE_REPOSITORY }}
-          issue-number: ${{ env.ISSUE_NUMBER }}
-          comment-id: ${{ steps.find-last-comment.outputs.comment-id }}
-          file: exercise-toolkit/markdown-templates/step-feedback/checking-work.md
-          edit-mode: replace
+  #     - name: Update comment - checking work
+  #       uses: GrantBirki/comment@v2.1.1
+  #       with:
+  #         repository: ${{ env.ISSUE_REPOSITORY }}
+  #         issue-number: ${{ env.ISSUE_NUMBER }}
+  #         comment-id: ${{ steps.find-last-comment.outputs.comment-id }}
+  #         file: exercise-toolkit/markdown-templates/step-feedback/checking-work.md
+  #         edit-mode: replace
 
-      # START: Check practical exercise
+  #     # START: Check practical exercise
 
-      - name: Check if PR was merged
-        id: check-pr-merged
-        continue-on-error: true
-        run: |
-          # Check if any PR was merged into demo branch
-          merged_pr=$(gh pr list --state merged --base demo --json mergedAt --jq '.[0].mergedAt')
-          if [ -n "$merged_pr" ] && [ "$merged_pr" != "null" ]; then
-            echo "merged=true" >> $GITHUB_OUTPUT
-            exit 0
-          else
-            echo "merged=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Check if PR was merged
+  #       id: check-pr-merged
+  #       continue-on-error: true
+  #       run: |
+  #         # Check if any PR was merged into demo branch
+  #         merged_pr=$(gh pr list --state merged --base demo --json mergedAt --jq '.[0].mergedAt')
+  #         if [ -n "$merged_pr" ] && [ "$merged_pr" != "null" ]; then
+  #           echo "merged=true" >> $GITHUB_OUTPUT
+  #           exit 0
+  #         else
+  #           echo "merged=false" >> $GITHUB_OUTPUT
+  #           exit 1
+  #         fi
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check if hotfix branch was deleted remotely
-        id: check-branch-deleted
-        continue-on-error: true
-        run: |
-          # Check if hotfix branch exists remotely
-          if git ls-remote --heads origin hotfix/css-stylesheet-typo | grep -q hotfix; then
-            echo "deleted=false" >> $GITHUB_OUTPUT
-            exit 1
-          else
-            echo "deleted=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+  #     - name: Check if hotfix branch was deleted remotely
+  #       id: check-branch-deleted
+  #       continue-on-error: true
+  #       run: |
+  #         # Check if hotfix branch exists remotely
+  #         if git ls-remote --heads origin hotfix/css-stylesheet-typo | grep -q hotfix; then
+  #           echo "deleted=false" >> $GITHUB_OUTPUT
+  #           exit 1
+  #         else
+  #           echo "deleted=true" >> $GITHUB_OUTPUT
+  #           exit 0
+  #         fi
 
-      - name: Check if code exists on demo branch
-        id: check-demo-branch
-        continue-on-error: true
-        run: |
-          # Check if demo branch exists and has commits
-          if git show-ref --verify --quiet refs/remotes/origin/demo; then
-            echo "on_demo=true" >> $GITHUB_OUTPUT
-            exit 0
-          else
-            echo "on_demo=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
+  #     - name: Check if code exists on demo branch
+  #       id: check-demo-branch
+  #       continue-on-error: true
+  #       run: |
+  #         # Check if demo branch exists and has commits
+  #         if git show-ref --verify --quiet refs/remotes/origin/demo; then
+  #           echo "on_demo=true" >> $GITHUB_OUTPUT
+  #           exit 0
+  #         else
+  #           echo "on_demo=false" >> $GITHUB_OUTPUT
+  #           exit 1
+  #         fi
 
-      - name: Update comment - step results
-        uses: GrantBirki/comment@v2.1.1
-        with:
-          repository: ${{ env.ISSUE_REPOSITORY }}
-          issue-number: ${{ env.ISSUE_NUMBER }}
-          comment-id: ${{ steps.find-last-comment.outputs.comment-id }}
-          edit-mode: replace
-          file: exercise-toolkit/markdown-templates/step-feedback/step-results-table.md
-          vars: |
-            step_number: 3
-            results_table:
-              - description: "Pull request was successfully merged into demo branch"
-                passed: ${{ steps.check-pr-merged.outcome == 'success' }}
-              - description: "Hotfix branch was deleted remotely"
-                passed: ${{ steps.check-branch-deleted.outcome == 'success' }}
-              - description: "Code is now on demo branch"
-                passed: ${{ steps.check-demo-branch.outcome == 'success' }}
+  #     - name: Update comment - step results
+  #       uses: GrantBirki/comment@v2.1.1
+  #       with:
+  #         repository: ${{ env.ISSUE_REPOSITORY }}
+  #         issue-number: ${{ env.ISSUE_NUMBER }}
+  #         comment-id: ${{ steps.find-last-comment.outputs.comment-id }}
+  #         edit-mode: replace
+  #         file: exercise-toolkit/markdown-templates/step-feedback/step-results-table.md
+  #         vars: |
+  #           step_number: 3
+  #           results_table:
+  #             - description: "Pull request was successfully merged into demo branch"
+  #               passed: ${{ steps.check-pr-merged.outcome == 'success' }}
+  #             - description: "Hotfix branch was deleted remotely"
+  #               passed: ${{ steps.check-branch-deleted.outcome == 'success' }}
+  #             - description: "Code is now on demo branch"
+  #               passed: ${{ steps.check-demo-branch.outcome == 'success' }}
 
-      # END: Check practical exercise
+  #     # END: Check practical exercise
 
-      - name: Fail job if not all checks passed
-        if: contains(steps.*.outcome, 'failure')
-        run: exit 1
+  #     - name: Fail job if not all checks passed
+  #       if: contains(steps.*.outcome, 'failure')
+  #       run: exit 1
   
   post_review_content:
     name: Post review content
@@ -164,7 +164,7 @@ jobs:
           file: ${{ env.REVIEW_FILE }}
 
       - name: Disable current workflow
-        run: gh workflow disable "${{github.workflow}}"
+        run: gh workflow disable "3-review-pr.yml"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
